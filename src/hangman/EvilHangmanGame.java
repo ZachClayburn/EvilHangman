@@ -1,13 +1,13 @@
 package hangman;
 
+import com.sun.istack.internal.NotNull;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class EvilHangmanGame implements IEvilHangmanGame{
 
@@ -23,8 +23,16 @@ public class EvilHangmanGame implements IEvilHangmanGame{
 
         game.startGame(dictionaryPath.toFile(),wordLength);
 
+        Scanner in = new Scanner(System.in);
+
         for(int round = 0; round < guessCount; ++round){
             //TODO Implement game play loop
+            char guess = in.next().charAt(0);//TODO Better input for game play
+            try {
+                game.makeGuess(guess);
+            } catch(GuessAlreadyMadeException e){
+                //TODO Handle already made guesses
+            }
         }
 
         //TODO Implement loss conditions
@@ -51,7 +59,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
             while (in.hasNext()){
                 String next = in.next();
                 if(next.length() == wordLength){
-                    dictionary.add(next);
+                    dictionary.add(next.toLowerCase());
                 }
             }
         } catch (FileNotFoundException e) {
@@ -73,12 +81,52 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         if(!guessList.add(guess)){
             throw new GuessAlreadyMadeException();
         }
+        Map<String,Set<String>> partitions = new HashMap<>();
 
-        return null;
+        for(String word : dictionary) {
+            Set<String> newSet = new HashSet<>();
+            newSet.add(word);
+            newSet = partitions.putIfAbsent(getMatchPattern(word,guess),newSet);
+            if(newSet != null){
+                newSet.add(word);
+            }
+        }
+
+        int maxCount = 0;
+        Set<String> newDictionary = null;
+
+        for(Set<String> partition : partitions.values()){
+            if(partition.size() > maxCount){
+                newDictionary = partition;
+                maxCount = newDictionary.size();
+            }
+        }
+
+        dictionary = newDictionary;
+        return newDictionary;
     }
 
-    //Data Members
+    /*
+     * Data Members
+     */
     private Set<String> dictionary;
     private Set<Character> guessList;
-    private Set<String> goodGuesses;
+
+    /*
+     * Helper Functions
+     */
+
+    static String getMatchPattern(String word, char guess){
+        StringBuilder matchPattern = new StringBuilder();
+
+        for(int i = 0; i < word.length(); i++){
+            if(word.charAt(i) == guess){
+                matchPattern.append('+');
+            }else{
+                matchPattern.append('-');
+            }
+        }
+
+        return matchPattern.toString();
+    }
 }
