@@ -1,5 +1,6 @@
 package hangman;
 
+import javax.xml.stream.events.Characters;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -14,7 +15,6 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         String dictionaryName = null;
         int wordLength = 0;
         int guessCount = 0;
-        //Check for correct number of arguments
         if(args.length != 3){
             System.out.println("Incorrect number of arguments!");
             badInputs = true;
@@ -27,9 +27,12 @@ public class EvilHangmanGame implements IEvilHangmanGame{
                 badInputs = true;
                 System.out.println("<word length> and <number of guesses> must be integers!");
             }
-            if (wordLength < 1 || guessCount < 1){
+            if (wordLength < 2){
                 badInputs = true;
-                System.out.println("<word length> and <number of guesses> must be greater than one!");
+                System.out.println("<word length> must be greater than two!");
+            }
+            if (guessCount < 1) {
+                System.out.println("<number of guesses> must be greater than one!");
             }
         }
 
@@ -46,26 +49,28 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         Scanner in = new Scanner(System.in);
 
         for(int round = 0; round < guessCount; ++round){
-            //TODO Implement game play loop
             System.out.println("Guess " + (round+1) + "/" + guessCount);
             System.out.println(game.getHintString());
             System.out.println("Make a Guess:");
-            String input = in.next();
-            if (input.equals("Zach")){
+            String input = in.next().toLowerCase();
+            if (input.equals("zach")){
                 game.cheat();
                 round--;
                 continue;
             }
-            char guess = input.charAt(0);//TODO Better input for game play
+            if(input.length() != 1 || !validLetters.contains(input)){
+                System.out.println("Please enter a single letter!");
+                round--;
+                continue;
+            }
+            char guess = input.charAt(0);
             try {
                 game.makeGuess(guess);
             } catch(GuessAlreadyMadeException e){
-                //TODO Handle already made guesses
                 System.out.println("You've already guessed that letter, try again!");
                 round--;
             }
             if(game.getHasWon()){
-                //TODO Implement wind condition
                 System.out.println("YOU WON!");
                 System.out.println("My Word was " + game.getHintString());
                 return;
@@ -73,6 +78,8 @@ public class EvilHangmanGame implements IEvilHangmanGame{
             System.out.println("\n\n");
         }
 
+        System.out.println("YOU LOSE!");
+        System.out.println("My Word was " + game.getWord());
         //TODO Implement loss conditions
 
     }
@@ -107,6 +114,10 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         }
         for(int i = 0; i < wordLength; i++){
             goodWord.append('*');
+        }
+        if (dictionary.isEmpty()){
+            System.out.println("No words of that length exist! Starting game with words of length 4");
+            this.startGame(dictionaryFile,4);
         }
     }
 
@@ -151,7 +162,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
             System.out.println("That's A Match!");
             updateGoodWord(matchWord,guess);
         }else {
-            System.out.println("No Match!");
+            System.out.println("Sorry, there are no " + guess + "'s");
         }
 
         dictionary = newDictionary;
@@ -208,5 +219,9 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         if(in.next().toLowerCase().charAt(0) == 'y') {
             System.out.println(Arrays.deepToString(dictionary.toArray()));
         }
+    }
+
+    private String getWord(){
+        return dictionary.iterator().next();
     }
 }
