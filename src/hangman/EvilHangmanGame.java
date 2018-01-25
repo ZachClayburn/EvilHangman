@@ -1,7 +1,5 @@
 package hangman;
 
-import com.sun.istack.internal.NotNull;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -13,10 +11,33 @@ public class EvilHangmanGame implements IEvilHangmanGame{
 
     public static void main(String[] args) {
         //TODO Implement input validation
-        String dictionaryName = args[0];
-        int wordLength = Integer.parseInt(args[1]);
-        int guessCount = Integer.parseInt(args[2]);
+        boolean badInputs = false;
+        String dictionaryName = null;
+        int wordLength = 0;
+        int guessCount = 0;
+        //Check for correct number of arguments
+        if(args.length != 3){
+            System.out.println("Incorrect number of arguments!");
+            badInputs = true;
+        }else {
+            dictionaryName = args[0];
+            try {
+                wordLength = Integer.parseInt(args[1]);
+                guessCount = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e){
+                badInputs = true;
+                System.out.println("<word length> and <number of guesses> must be integers!");
+            }
+            if (wordLength < 1 || guessCount < 1){
+                badInputs = true;
+                System.out.println("<word length> and <number of guesses> must be greater than one!");
+            }
+        }
 
+        if (badInputs){
+            System.out.println("Correct usages is\nJava hangman.EvilHangmanGame <dictionary name> <word length> <number of guesses>");
+            return;
+        }
         EvilHangmanGame game = new EvilHangmanGame();
 
         Path dictionaryPath = Paths.get(dictionaryName);
@@ -53,7 +74,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         dictionary = new TreeSet<>();
         guessList = new TreeSet<>();
 
-        try {//Must Validate dictionaryFile BEFORE passing into this file... unless I come up with a better way
+        try {
             Scanner in = new Scanner(dictionaryFile, StandardCharsets.UTF_8.name());
 
             while (in.hasNext()){
@@ -63,7 +84,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
                 }
             }
         } catch (FileNotFoundException e) {
-            return;
+            System.out.println(e);//Bad form, but it complies with the interface
         }
     }
 
