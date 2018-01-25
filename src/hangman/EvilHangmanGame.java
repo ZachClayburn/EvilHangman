@@ -10,7 +10,6 @@ import java.util.*;
 public class EvilHangmanGame implements IEvilHangmanGame{
 
     public static void main(String[] args) {
-        //TODO Implement input validation
         boolean badInputs = false;
         String dictionaryName = null;
         int wordLength = 0;
@@ -48,12 +47,30 @@ public class EvilHangmanGame implements IEvilHangmanGame{
 
         for(int round = 0; round < guessCount; ++round){
             //TODO Implement game play loop
-            char guess = in.next().charAt(0);//TODO Better input for game play
+            System.out.println("Guess " + (round+1) + "/" + guessCount);
+            System.out.println(game.getHintString());
+            System.out.println("Make a Guess:");
+            String input = in.next();
+            if (input.equals("Zach")){
+                game.cheat();
+                round--;
+                continue;
+            }
+            char guess = input.charAt(0);//TODO Better input for game play
             try {
                 game.makeGuess(guess);
             } catch(GuessAlreadyMadeException e){
                 //TODO Handle already made guesses
+                System.out.println("You've already guessed that letter, try again!");
+                round--;
             }
+            if(game.getHasWon()){
+                //TODO Implement wind condition
+                System.out.println("YOU WON!");
+                System.out.println("My Word was " + game.getHintString());
+                return;
+            }
+            System.out.println("\n\n");
         }
 
         //TODO Implement loss conditions
@@ -73,6 +90,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
     public void startGame(File dictionaryFile, int wordLength) {
         dictionary = new TreeSet<>();
         guessList = new TreeSet<>();
+        goodWord = new StringBuilder();
 
         try {
             Scanner in = new Scanner(dictionaryFile, StandardCharsets.UTF_8.name());
@@ -85,6 +103,10 @@ public class EvilHangmanGame implements IEvilHangmanGame{
             }
         } catch (FileNotFoundException e) {
             System.out.println(e);//Bad form, but it complies with the interface
+            return;
+        }
+        for(int i = 0; i < wordLength; i++){
+            goodWord.append('*');
         }
     }
 
@@ -115,16 +137,34 @@ public class EvilHangmanGame implements IEvilHangmanGame{
 
         int maxCount = 0;
         Set<String> newDictionary = null;
+        String matchWord = "";
 
-        for(Set<String> partition : partitions.values()){
-            if(partition.size() > maxCount){
-                newDictionary = partition;
+        for(Map.Entry<String,Set<String>> partition : partitions.entrySet()){
+            if(partition.getValue().size() > maxCount){
+                matchWord = partition.getKey();
+                newDictionary = partition.getValue();
                 maxCount = newDictionary.size();
             }
         }
 
+        if (matchWord.contains("+")){
+            System.out.println("That's A Match!");
+            updateGoodWord(matchWord,guess);
+        }else {
+            System.out.println("No Match!");
+        }
+
         dictionary = newDictionary;
         return newDictionary;
+    }
+
+
+    public String getHintString(){
+        return goodWord.toString();
+    }
+
+    public boolean getHasWon(){
+        return !goodWord.toString().contains("*");
     }
 
     /*
@@ -132,12 +172,15 @@ public class EvilHangmanGame implements IEvilHangmanGame{
      */
     private Set<String> dictionary;
     private Set<Character> guessList;
+    private StringBuilder goodWord;
+    private static String validLetters = "abcdefghijklmnopqrstuvwxyz";
+
 
     /*
      * Helper Functions
      */
 
-    static String getMatchPattern(String word, char guess){
+    private static String getMatchPattern(String word, char guess){
         StringBuilder matchPattern = new StringBuilder();
 
         for(int i = 0; i < word.length(); i++){
@@ -149,5 +192,21 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         }
 
         return matchPattern.toString();
+    }
+
+    private void updateGoodWord(String matchWord, Character guess){
+        for (int i = 0; i < matchWord.length(); i++) {
+            if (matchWord.charAt(i) == '+'){
+                goodWord.replace(i,i+1,guess.toString());
+            }
+        }
+    }
+
+    private void cheat(){
+        Scanner in = new Scanner(System.in);
+        System.out.println("There are " + dictionary.size() + " words left in the dictionary. Print them all? [y/n]");
+        if(in.next().toLowerCase().charAt(0) == 'y') {
+            System.out.println(Arrays.deepToString(dictionary.toArray()));
+        }
     }
 }
