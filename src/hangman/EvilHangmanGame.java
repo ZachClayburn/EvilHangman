@@ -159,7 +159,7 @@ public class EvilHangmanGame implements IEvilHangmanGame{
                     newDictionary = partition.getValue();
                     maxCount = newDictionary.size();
                 } else if (countHits(matchWord) != countHits(partition.getKey())){
-                    if (countHits(matchWord) < countHits(partition.getKey())){
+                    if (countHits(matchWord) > countHits(partition.getKey())){
                         matchWord = partition.getKey();
                         newDictionary = partition.getValue();
                         maxCount = newDictionary.size();
