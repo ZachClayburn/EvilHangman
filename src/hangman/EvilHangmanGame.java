@@ -151,7 +151,28 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         String matchWord = "";
 
         for(Map.Entry<String,Set<String>> partition : partitions.entrySet()){
-            if(partition.getValue().size() > maxCount){
+            if (partition.getValue().size() == maxCount){
+                if (!matchWord.contains("+")){
+                    continue;
+                } else if (!partition.getKey().contains("+")){
+                    matchWord = partition.getKey();
+                    newDictionary = partition.getValue();
+                    maxCount = newDictionary.size();
+                } else if (countHits(matchWord) != countHits(partition.getKey())){
+                    if (countHits(matchWord) < countHits(partition.getKey())){
+                        matchWord = partition.getKey();
+                        newDictionary = partition.getValue();
+                        maxCount = newDictionary.size();
+                    }
+                } else {
+                    if (hasRightmostHit(matchWord,partition.getKey())){
+                        matchWord = partition.getKey();
+                        newDictionary = partition.getValue();
+                        maxCount = newDictionary.size();
+                    }
+                }
+
+            }else if(partition.getValue().size() > maxCount){
                 matchWord = partition.getKey();
                 newDictionary = partition.getValue();
                 maxCount = newDictionary.size();
@@ -170,14 +191,6 @@ public class EvilHangmanGame implements IEvilHangmanGame{
     }
 
 
-    public String getHintString(){
-        return goodWord.toString();
-    }
-
-    public boolean getHasWon(){
-        return !goodWord.toString().contains("*");
-    }
-
     /*
      * Data Members
      */
@@ -186,10 +199,16 @@ public class EvilHangmanGame implements IEvilHangmanGame{
     private StringBuilder goodWord;
     private static String validLetters = "abcdefghijklmnopqrstuvwxyz";
 
-
     /*
      * Helper Functions
      */
+    public boolean getHasWon(){
+        return !goodWord.toString().contains("*");
+    }
+
+    public String getHintString(){
+        return goodWord.toString();
+    }
 
     private static String getMatchPattern(String word, char guess){
         StringBuilder matchPattern = new StringBuilder();
@@ -203,6 +222,30 @@ public class EvilHangmanGame implements IEvilHangmanGame{
         }
 
         return matchPattern.toString();
+    }
+
+    private static int countHits(String matchString){
+        int sum = 0;
+
+        for (int i = 0; i < matchString.length(); i++) {
+            if (matchString.charAt(i) == '+'){
+                sum++;
+            }
+        }
+
+        return sum;
+    }
+
+    private static boolean hasRightmostHit(String champ, String contender){
+        int champRightmost = champ.lastIndexOf("+");
+        int contenderRightmost = contender.lastIndexOf("+");
+
+        if (champRightmost == contenderRightmost){
+            return hasRightmostHit(champ.substring(0,champRightmost),contender.substring(0,contenderRightmost));
+        }
+        return contenderRightmost > champRightmost;
+
+
     }
 
     private void updateGoodWord(String matchWord, Character guess){
